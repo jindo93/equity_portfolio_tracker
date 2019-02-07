@@ -1,0 +1,34 @@
+<!--
+html provides the structure
+css style
+javascript behavior -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <div>
+      <!-- this is the form section -->
+      <h1>{{ usr }}'s home</h1>
+      <p>Balance: {{ balance }}</p>
+      <form action="/user-home" method="post">
+        <input
+          name="username"
+          type="text"
+          placeholder="Username"
+          required
+          autofocus
+        />
+        <input
+          name="password"
+          type="password"
+          placeholder="Password"
+          required
+        />
+        <input type="submit" />
+      </form>
+    </div>
+  </body>
+</html>

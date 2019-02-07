@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+
+from flask import Flask, render_template, request
+# importing a class from a module, which is a third-party library.
+
+app = Flask(__name__)
+# Creating an instance of the Flask class and assigning it to the app variable.
+
+
+@app.route('/')
+def frontpage():
+    return render_template('index.html')
+
+
+@app.route('/user', methods=['GET', 'POST'])
+def user():
+    if request.method == 'GET':
+        return render_template('index.html', message='i am jebsi, the whisperer')
+    elif request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username == 'jin' \
+                and password == '0000':
+            return 'ohh hacker'
+        else:
+            return 'gtfo bitch'
+    pass
+
+
+@app.route('/admin')
+def admin():
+    pass
+
+
+@app.route('/leaderboard')
+def leaderboard():
+    pass
+
+
+if __name__ == '__main__':
+    app.run()
