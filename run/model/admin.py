@@ -24,6 +24,11 @@ class Admin:
         admin.password = admin_dic['password']
         return True
 
+    def initialize_admin(self, username):
+        admin = Admin()
+        admin.username = username
+        return True
+
     def delete_user(self, table_name, user_name):
         with Schema(self.filename) as db:
             db.delete_user(table_name, user_name)
@@ -48,30 +53,23 @@ class Admin:
     def getKey(item):
         return item[1]
 
-    def get_leaderboard(self):
-        with Schema(self.filename) as db:
-            sql = '''SELECT username FROM users;'''
-            db.cursor.execute(sql)
-            usernames = db.cursor.fetchall()
-        names = []
-        for username in usernames:
-            names.append(username[0])
+    # def get_leaderboard(self):
+    #     with Schema(self.filename) as db:
+    #         sql = '''SELECT username FROM users;'''
+    #         db.cursor.execute(sql)
+    #         usernames = db.cursor.fetchall()
+    #     names = []
+    #     for username in usernames:
+    #         names.append(username[0])
 
-        earnings = []
-        for name in names:
-            earning = self.get_total_earnings(name)
-            earnings.append((name, earning))
-        sorted(earnings, key=self.getKey, reverse=True)
-        leaderboard = earnings[:10]
+    #     earnings = []
+    #     for name in names:
+    #         earning = self.get_total_earnings(name)
+    #         earnings.append((name, earning))
+    #     sorted(earnings, key=self.getKey, reverse=True)
+    #     leaderboard = earnings[:10]
 
-        return leaderboard
-
-    def get_total_earnings(self, username):
-        earnings = self.get_each_earnings(username)
-        total = 0
-        for i, k in enumerate(earnings):
-            total += earnings[k]
-        return total
+    #     return leaderboard
 
     def quote_last_price(self, ticker_symbol):
         with Markit() as m:
@@ -81,59 +79,34 @@ class Admin:
                 return False
             return last_price
 
-    def get_each_earnings(self, username):
-        position_dict = {}
-        temp_sell_dict = {}
-        temp_buy_dict = {}
-        sell_dict = {}
-        buy_dict = {}
+    def calculate_earnings(self, userid):
         with Schema(self.filename) as db:
-            position_dict = db.query_positions(username)
-            temp_sell_dict = db.get_sell_trades(username)
-            temp_buy_dict = db.get_buy_trades(username)
-
-        for item in temp_sell_dict:
-            if not sell_dict.get(temp_sell_dict[item][0]):
-                sell_dict[temp_sell_dict[item][0]
-                          ] = temp_sell_dict[item][1] * temp_sell_dict[item][2]
-            else:
-                sell_dict[temp_sell_dict[item][0]
-                          ] += temp_sell_dict[item][1] * temp_sell_dict[item][2]
-        for item in temp_buy_dict:
-            if not buy_dict.get(temp_buy_dict[item][0]):
-                buy_dict[temp_buy_dict[item][0]
-                         ] = temp_buy_dict[item][1] * temp_buy_dict[item][2]
-            else:
-                buy_dict[temp_buy_dict[item][0]
-                         ] += temp_buy_dict[item][1] * temp_buy_dict[item][2]
-
-        position_value = {}
+            position_dict = db.query_positions(userid)
+        total_earnings = 0
         for i, k in enumerate(position_dict):
-            price = self.quote_last_price(k)
-            position_value[k] = position_dict[k] * price
+            stock_price = self.quote_last_price(k)
+            total_earnings += position_dict[k]*stock_price
+        return total_earnings
 
-        for i, k in enumerate(position_value):
-            if sell_dict.get(k):
-                position_value[k] += sell_dict[k]
-            if buy_dict.get(k):
-                position_value[k] -= buy_dict[k]
-        return position_value
-
-    def query_positions(self, username):
+    def get_leaderboard(self):
         with Schema(self.filename) as db:
-            return db.query_positions(username)
+            sql = 'SELECT user_id FROM users;'
+            db.cursor.execute(sql)
+            ids = db.cursor.fetchall()
+        earnings = []
+        for id in ids:
+            earning = self.calculate_earnings(id[0])
+            earnings.append((id[0], earning))
+        sorted(earnings, key=self.getKey, reverse=True)
+        leaderboard = earnings[:10]
+        return leaderboard
 
-    # def query_userinfo_users(self):
-    #     with Schema(self.filename) as db:
-    #         dict = {}
-    #         for i in db.query_
-    #         return db.query_userinfo
-
-    def query_userinfo_positions(self, username):
+    def query_positions(self, userid):
         with Schema(self.filename) as db:
-            return db.query_positions(username)
+            return db.query_positions(userid)
 
     # function created for testing
+
     def create_terminal_trader_tables(self):
         with Schema(self.filename) as db:
             db.cursor.execute('''DROP TABLE IF EXISTS users;''')

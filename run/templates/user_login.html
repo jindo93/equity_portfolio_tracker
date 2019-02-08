@@ -9,12 +9,12 @@ javascript behavior -->
     <meta charset="utf-8" />
   </head>
   <body>
+    {% if msg %}
+    <p>{{ msg }}</p>
+    {% endif %}
     <div>
-      {% if msg %}
-      <p>{{ msg }}</p>
-      {% endif %}
       <!-- this is the form section -->
-      <form action="/admin" method="post">
+      <form action="/user-login" method="post">
         <input
           name="username"
           type="text"

@@ -1,58 +1,46 @@
 #!/usr/bin/env python3
 from model.user import User
 from model.admin import Admin
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, redirect, url_for
 # importing a class from a module, which is a third-party library.
 
 app = Flask(__name__)
 # Creating an instance of the Flask class and assigning it to the app variable.
 app.secret_key = 'random'
-
 file = 'run/datafile.db'
 
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def frontpage():
-    return render_template('index.html')
+    if 'username' in session:
+        return redirect('/user-home')
+    elif 'admin' in session:
+        return redirect('/admin-home')
+    else:
+        return render_template('index.html')  # redirect('/login')
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/user-login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
-        return render_template('login.html', msg='Enter username and password')
+        return render_template('user_login.html', msg='Enter username and password')
     elif request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         user = User(file)
-        user.login(username, password)
-        if user:
+        if user.login(username, password):
             session['username'] = username
-            session['password'] = password
-            session['user_id'] = user.user_id
-            session['balance'] = user.balance
-            session['positions'] = {}
-            session['positions'] = user.positions
-            session['earnings'] = {}
-            session['earnings'] = user.earnings
-
-            return render_template(
-                'user_home.html',
-                usr=session['username'],
-                balance=session['balance'],
-                positions=session['positions'],
-                earnings=session['earnings']
-            )
-            # return redirect(url_for('user_home.html'))
+            return redirect(url_for('user_home'))
         else:
             return render_template(
-                'login.html', msg='Invalid user credentials'
+                'user_login.html', msg='Invalid user credentials'
             )
-        # else:
-        #     return render_template(
-        #         'user_home.html',
-        #         usr=username,
-        #         balance=user.balance
-        #     )
+
+
+@app.route('/user-logout', methods=['GET'])
+def log_out():
+    session.pop('username', None)
+    return render_template('index.html')
 
 
 @app.route('/update-balance', methods=['POST'])
@@ -64,7 +52,15 @@ def update_balance():
 @app.route('/user-home', methods=['GET', 'POST'])
 def user_home():
     if request.method == 'GET':
-        return render_template('user_home.html', msg='')
+        user = User(file)
+        user.initialize_user(session['username'])
+        return render_template(
+            'user_home.html',
+            usr=user.username,
+            balance=user.balance,
+            positions=user.positions,  # session['positions'],
+            earnings=user.earnings
+        )
 
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -86,19 +82,34 @@ def create_account():
             )
 
 
-@app.route('/admin', methods=['GET', 'POST'])
-def admin():
+@app.route('/admin-login', methods=['GET', 'POST'])
+def admin_login():
     if request.method == 'GET':
         return render_template(
-            'admin.html', msg='Enter admin username and password'
+            'admin_login.html', msg='Enter admin username and password'
         )
     elif request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if username == 'jin' and password == '0000':
-            return 'Admin credentials confirmed'
+        admin = Admin()
+        if admin.login(username, password):
+            session['admin'] = username
+            return redirect(url_for('admin_home'))
         else:
-            return 'Invalid credentials'
+            return render_template(
+                'admin_login.html',
+                msg='Invalid Credentials'
+            )
+
+
+@app.route('/admin-home', methods=['GET', 'POST'])
+def admin_home():
+    if request.method == 'GET':
+        admin = Admin()
+        admin.initialize_admin(session['admin'])
+        return render_template(
+            'admin_home.html',
+        )
 
 
 @app.route('/leaderboard')

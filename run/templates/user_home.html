@@ -13,25 +13,17 @@ javascript behavior -->
       <!-- this is the form section -->
       <h1>{{ usr }}'s home</h1>
       <p>Balance: {{ balance }}</p>
-      <p>Stocks: {{ positions }}</p>
+      <p>Stocks:</p>
+      {% for key, value in positions.items() %}
+      <p>{{ key }} {{ value }}</p>
+      {% endfor %}
       <p>Earnings: {{ earnings }}</p>
       <form action="/update-balance" method="post">
         <input name="deposit" type="text" placeholder="Amount" />
-        <!--
-          required
-          autofocus
-          -->
-
-        <input type="deposit" />
-
-        <!-- <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          required
-        />
-        <input type="submit" /> -->
+        <input type="submit" />
       </form>
     </div>
   </body>
+  <br />
+  <a href="/user-logout">Logout</a>
 </html>

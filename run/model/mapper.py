@@ -59,6 +59,17 @@ class Schema:
         except:
             return False
 
+    def initialize_user(self, username):
+        try:
+            sql = ''' SELECT *
+                        FROM users
+                        WHERE username = "{0}";'''.format(username)
+            self.cursor.execute(sql)
+            users = self.cursor.fetchall()
+            return users
+        except:
+            return False
+
     def signup(self, username, password):
         if self.query_username(username):
             return False

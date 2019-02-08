@@ -28,6 +28,18 @@ class User:
             return True
         return False
 
+    def initialize_user(self, username):
+        if self.query_username(username):
+            with Schema(self.file_name) as db:
+                users = db.initialize_user(username)
+                self.user_id = users[0][0]
+                self.username = users[0][1]
+                self.password = users[0][2]
+                self.balance = users[0][3]
+                self.positions = db.query_positions(self.user_id)
+            return True
+        return False
+
     def signup(self, username, password):
         with Schema(self.file_name) as db:
             return db.signup(username, password)
@@ -215,7 +227,6 @@ class User:
 
 
 ###########################################################
-
 
     def change_password(self, new_password):
         with Schema(self.file_name) as db:
