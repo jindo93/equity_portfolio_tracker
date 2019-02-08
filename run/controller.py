@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 from model.user import User
 from model.admin import Admin
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session
 # importing a class from a module, which is a third-party library.
 
 app = Flask(__name__)
 # Creating an instance of the Flask class and assigning it to the app variable.
+app.secret_key = 'random'
 
 file = 'run/datafile.db'
 
@@ -23,25 +24,41 @@ def login():
         username = request.form['username']
         password = request.form['password']
         user = User(file)
-        if not user.login(username, password):
+        user.login(username, password)
+        if user:
+            session['username'] = username
+            session['password'] = password
+            session['user_id'] = user.user_id
+            session['balance'] = user.balance
+            session['positions'] = {}
+            session['positions'] = user.positions
+            session['earnings'] = {}
+            session['earnings'] = user.earnings
+
+            return render_template(
+                'user_home.html',
+                usr=session['username'],
+                balance=session['balance'],
+                positions=session['positions'],
+                earnings=session['earnings']
+            )
+            # return redirect(url_for('user_home.html'))
+        else:
             return render_template(
                 'login.html', msg='Invalid user credentials'
             )
-        else:
-            return render_template(
-                'user_home.html',
-                usr=username,
-                balance=user.balance
-            )
+        # else:
+        #     return render_template(
+        #         'user_home.html',
+        #         usr=username,
+        #         balance=user.balance
+        #     )
 
-        if username == 'jin' \
-                and password == '0000':
-            return render_template(
-                'user_home.html', msg='User credentials confirmed', usr=username
-            )
-        else:
-            return render_template('login.html', msg='Invalid credentials')
-    pass
+
+@app.route('/update-balance', methods=['POST'])
+def update_balance():
+    deposit = request.form['deposit']
+    user = User(file)
 
 
 @app.route('/user-home', methods=['GET', 'POST'])
@@ -90,4 +107,4 @@ def leaderboard():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5001)

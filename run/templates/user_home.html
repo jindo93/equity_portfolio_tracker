@@ -13,21 +13,24 @@ javascript behavior -->
       <!-- this is the form section -->
       <h1>{{ usr }}'s home</h1>
       <p>Balance: {{ balance }}</p>
-      <form action="/user-home" method="post">
-        <input
-          name="username"
-          type="text"
-          placeholder="Username"
+      <p>Stocks: {{ positions }}</p>
+      <p>Earnings: {{ earnings }}</p>
+      <form action="/update-balance" method="post">
+        <input name="deposit" type="text" placeholder="Amount" />
+        <!--
           required
           autofocus
-        />
-        <input
+          -->
+
+        <input type="deposit" />
+
+        <!-- <input
           name="password"
           type="password"
           placeholder="Password"
           required
         />
-        <input type="submit" />
+        <input type="submit" /> -->
       </form>
     </div>
   </body>

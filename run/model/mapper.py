@@ -3,9 +3,10 @@
 import os
 import sqlite3
 
+
 class Schema:
-    def __init__(self,datafile):
-        self.connection = sqlite3.connect(datafile,check_same_thread=False)
+    def __init__(self, datafile):
+        self.connection = sqlite3.connect(datafile, check_same_thread=False)
         self.cursor = self.connection.cursor()
 
     def __enter__(self):
@@ -46,6 +47,28 @@ class Schema:
         except:
             return False
 
+    def login(self, username, password):
+        try:
+            sql = ''' SELECT *
+                        FROM users
+                        WHERE username = '{0}'
+                        AND password = '{1}';'''.format(username, password)
+            self.cursor.execute(sql)
+            users = self.cursor.fetchall()
+            return users
+        except:
+            return False
+
+    def signup(self, username, password):
+        if self.query_username(username):
+            return False
+        else:
+            self.cursor.execute('''INSERT INTO users(
+                                username, password, balance
+                                ) VALUES (?,?,?);''',
+                                (username, password, 0))
+            return True
+
     def query_table(self, table_name):
         try:
             sql = '''SELECT username
@@ -55,7 +78,7 @@ class Schema:
             return user_list
         except:
             return False
-        
+
     def query_userinfo(self):
         try:
             sql = '''SELECT *
@@ -101,14 +124,12 @@ class Schema:
         except:
             return False
 
-    def query_positions(self, username):
+    def query_positions(self, userid):
         try:
             sql = ''' SELECT *
                         FROM positions
-                        WHERE user_id = (SELECT user_id
-                                        FROM users
-                                        WHERE username = "{0}")
-                        GROUP BY ticker;'''.format(username)
+                        WHERE user_id = {0}
+                        GROUP BY ticker;'''.format(userid)
             self.cursor.execute(sql)
             positions = self.cursor.fetchall()
             position_dict = {}
@@ -118,43 +139,38 @@ class Schema:
         except:
             return False
 
-
-    def get_sell_trades(self, username):
+    def get_sell_trades(self, userid):
         try:
             sql = ''' Select *
                         FROM trades
                         WHERE type = 'sell'
-                        AND user_id =
-                                (SELECT user_id
-                                FROM users
-                                WHERE username = "{0}");'''.format(username)
+                        AND user_id = {0};'''.format(userid)
             self.cursor.execute(sql)
             trades = self.cursor.fetchall()
             trades_dict = {}
             for trade in trades:
-                trades_dict[trade[0]] = [trade[2],trade[3],trade[4]]
+                if not trades_dict.get(trade[2]):
+                    trades_dict[trade[2]] = trade[3]*trade[4]
+                else:
+                    trades_dict[trade[2]] += trade[3]*trade[4]
             return trades_dict
         except:
             return False
-                        
-    def get_buy_trades(self, username):
+
+    def get_buy_trades(self, userid):
         try:
             sql = ''' SELECT *
                         FROM trades
-                        WHERE user_id =
-                            (SELECT user_id
-                            FROM users
-                            WHERE username = "{0}")
-                        AND type = 'buy';'''.format(username)
+                        WHERE type = 'buy'
+                        And user_id = {0};'''.format(userid)
             self.cursor.execute(sql)
             trades = self.cursor.fetchall()
             trades_dict = {}
             for trade in trades:
-                trades_dict[trade[0]] = [trade[2], trade[3], trade[4]]
+                if not trades_dict.get(trade[2]):
+                    trades_dict[trade[2]] = trade[3]*trade[4]
+                else:
+                    trades_dict[trade[2]] += trade[3]*trade[4]
             return trades_dict
         except:
             return False
-    
-
-
-

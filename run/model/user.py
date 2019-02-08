@@ -19,38 +19,18 @@ class User:
     def login(self, username, password):
         if self.confirm_user(username, password):
             with Schema(self.file_name) as db:
-                sql = ''' SELECT *
-                          FROM users
-                          WHERE username = '{0}'
-                            AND password = '{1}';'''.format(username, password)
-                db.cursor.execute(sql)
-                users = db.cursor.fetchall()
-
+                users = db.login(username, password)
                 self.user_id = users[0][0]
                 self.username = users[0][1]
                 self.password = users[0][2]
                 self.balance = users[0][3]
-                self.positions = db.query_positions(username)
+                self.positions = db.query_positions(self.user_id)
             return True
         return False
 
     def signup(self, username, password):
-        if self.query_username(username):
-            return False
-        self.username = username
-        self.password = password
-        self.balance = 0
         with Schema(self.file_name) as db:
-            # sql = '''INSERT INTO users(
-            #            username, password, balance
-            #        ) VALUES (?,?,?);''',
-            #        (self.username, self.password, self.balance)
-            #db.cursor.execute(sql,(self.username, self.password, self.balance))
-            db.cursor.execute('''INSERT INTO users(
-                        username, password, balance
-                    ) VALUES (?,?,?);''',
-                              (self.username, self.password, self.balance))
-            return True
+            return db.signup(username, password)
 
     def withdraw(self, amount):
         if self.balance > amount:
@@ -176,46 +156,16 @@ class User:
             total += earnings[k]
         return total
 
-    # def get_total_earnings(self):
-    #     earnings = self.get_each_earnings()
-    #     count = 0
-    #     for item in earnings:
-    #         count+=earnings.get(item)
-    #     return count
-        # print("        ", item.upper(), round(earnings[item],2))
-    #     each_earnings = {}
-    #     each_earnings = self.get_each_earnings()
-    #     total_earnings = 0
-    #     for i,k in enumerate(each_earnings):
-    #         total_earnings += each_earnings[k]
-    #     return total_earnings
-
     def get_sell_trades(self):
-        temp_dict = {}
         trade_dict = {}
         with Schema(self.file_name) as db:
-            temp_dict = db.get_sell_trades(self.username)
-        for item in temp_dict:
-            if not trade_dict.get(temp_dict[item][0]):
-                trade_dict[temp_dict[item][0]
-                           ] = temp_dict[item][1]*temp_dict[item][2]
-            else:
-                trade_dict[temp_dict[item][0]
-                           ] += temp_dict[item][1]*temp_dict[item][2]
+            trade_dict = db.get_sell_trades(self.user_id)
         return trade_dict
 
     def get_buy_trades(self):
-        temp_dict = {}
         trade_dict = {}
         with Schema(self.file_name) as db:
-            temp_dict = db.get_buy_trades(self.username)
-        for item in temp_dict:
-            if not trade_dict.get(temp_dict[item][0]):
-                trade_dict[temp_dict[item][0]
-                           ] = temp_dict[item][1]*temp_dict[item][2]
-            else:
-                trade_dict[temp_dict[item][0]
-                           ] += temp_dict[item][1]*temp_dict[item][2]
+            trade_dict = db.get_buy_trades(self.user_id)
         return trade_dict
 
     def record_trade(self, ticker, type, stock_price, num_of_shares, timestamp):
