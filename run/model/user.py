@@ -31,11 +31,11 @@ class User:
     def initialize_user(self, username):
         if self.query_username(username):
             with Schema(self.file_name) as db:
-                users = db.initialize_user(username)
-                self.user_id = users[0][0]
-                self.username = users[0][1]
-                self.password = users[0][2]
-                self.balance = users[0][3]
+                user = db.initialize_user(username)
+                self.user_id = user[0][0]
+                self.username = user[0][1]
+                self.password = user[0][2]
+                self.balance = user[0][3]
                 self.positions = db.query_positions(self.user_id)
             return True
         return False
@@ -45,7 +45,7 @@ class User:
             return db.signup(username, password)
 
     def withdraw(self, amount):
-        if self.balance > amount:
+        if self.balance >= amount:
             self.balance -= amount
             self.update_balance()
             return True
@@ -81,7 +81,7 @@ class User:
                 self.record_position(ticker, num_of_shares)
                 # records new position in sql positions table
             self.update_balance()
-            return self.positions[ticker], self.balance
+            return True
         else:
             return False
 
@@ -90,16 +90,18 @@ class User:
         last_price = self.quote_last_price(ticker)
         type = 'sell'
         timestamp = time.time()
+        if self.positions.get(ticker) == None:
+            return False
 
         if self.balance > broker_fee:
-            if self.positions[ticker] >= num_of_shares:
+            if self.positions.get(ticker) >= num_of_shares:
                 self.positions[ticker] -= num_of_shares
                 self.balance += (last_price * num_of_shares) - broker_fee
                 self.record_trade(ticker, type, last_price,
                                   num_of_shares, timestamp)
                 self.update_position(ticker)
                 self.update_balance()
-                return self.positions[ticker], self.balance
+                return True
         return False
 
     def lookup_ticker_symbol(self, company_name):
@@ -112,6 +114,13 @@ class User:
     def quote_last_price(self, ticker_symbol):
         with Markit() as m:
             last_price = m.quote(ticker_symbol.lower())
+            if isinstance(last_price, bool):
+                return False
+            return last_price
+
+    def quote_last_price2(self, ticker_symbol):
+        with Markit() as m:
+            last_price = m.quote_price2(ticker_symbol.lower())
             if isinstance(last_price, bool):
                 return False
             return last_price

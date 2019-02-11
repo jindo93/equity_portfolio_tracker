@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <div>
+      <br />
+      {% if not symbol %}
+      <p>Lookup Ticker Symbol:</p>
+      {% endif %} {% if symbol %}
+      <p>Ticker Symbol: {{ symbol }}</p>
+      {% endif %}
+      <form action="/search-ticker" method="post">
+        <input
+          name="company_name"
+          type="text"
+          placeholder="Enter Company Name"
+        />
+        <input type="submit" />
+      </form>
+
+      <br />
+      {% if not price %}
+      <p>Lookup Stock Price:</p>
+      {% endif %} {% if price %}
+      <p>Stock Price: {{ price }}</p>
+      {% endif %}
+      <form action="/quote-stock-price" method="post">
+        <input
+          name="ticker_symbol"
+          type="text"
+          placeholder="Enter Ticker Symbol"
+        />
+        <input type="submit" />
+      </form>
+      <br />
+      <p>Buy Stocks</p>
+      <form action="/buy-stocks" method="post">
+        <input
+          name="ticker_symbol"
+          type="text"
+          placeholder="Enter stock symbol to buy"
+        />
+        <input
+          name="num_of_stocks"
+          type="number"
+          placeholder="Enter number of stocks to buy"
+        />
+        <input type="submit" />
+      </form>
+      {% if buy_msg %}
+      <p>{{ buy_msg }}</p>
+      {% endif %}
+      <br />
+
+      <p>Sell Stocks</p>
+      <form action="/sell-stocks" method="post">
+        <input
+          name="ticker_symbol"
+          type="text"
+          placeholder="Enter stock symbol to sell"
+        />
+        <input
+          name="num_of_stocks"
+          type="number"
+          placeholder="Enter number of stocks to sell"
+        />
+        <input type="submit" />
+      </form>
+      {% if sell_msg %}
+      <p>{{ sell_msg }}</p>
+      {% endif %}
+    </div>
+  </body>
+  <a href="/user-home">
+    <p>Return Home</p>
+  </a>
+</html>

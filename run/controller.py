@@ -12,6 +12,8 @@ file = 'run/datafile.db'
 
 @app.route('/', methods=['GET'])
 def frontpage():
+    user_logout()
+    admin_logout()
     if 'username' in session:
         return redirect('/user-home')
     elif 'admin' in session:
@@ -21,9 +23,11 @@ def frontpage():
 
 
 @app.route('/user-login', methods=['GET', 'POST'])
-def login():
+def user_login():
     if request.method == 'GET':
-        return render_template('user_login.html', msg='Enter username and password')
+        return render_template(
+            'user_login.html', msg='Enter username and password'
+        )
     elif request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -37,30 +41,37 @@ def login():
             )
 
 
+@app.route('/admin-login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'GET':
+        return render_template(
+            'admin_login.html', msg='Enter admin username and password'
+        )
+    elif request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        admin = Admin()
+        #print('before login')
+        if admin.login(username, password):
+            #print('after login')
+            session['admin'] = username
+            return redirect(url_for('admin_home'))
+        else:
+            return render_template(
+                'admin_login.html', msg='Invalid Credentials'
+            )
+
+
 @app.route('/user-logout', methods=['GET'])
-def log_out():
+def user_logout():
     session.pop('username', None)
     return render_template('index.html')
 
 
-@app.route('/update-balance', methods=['POST'])
-def update_balance():
-    deposit = request.form['deposit']
-    user = User(file)
-
-
-@app.route('/user-home', methods=['GET', 'POST'])
-def user_home():
-    if request.method == 'GET':
-        user = User(file)
-        user.initialize_user(session['username'])
-        return render_template(
-            'user_home.html',
-            usr=user.username,
-            balance=user.balance,
-            positions=user.positions,  # session['positions'],
-            earnings=user.earnings
-        )
+@app.route('/admin-logout', methods=['GET'])
+def admin_logout():
+    session.pop('admin', None)
+    return render_template('index.html')
 
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -78,28 +89,130 @@ def create_account():
         else:
             user.signup(username, password)
             return render_template(
-                'login.html', msg='Enter username and password'
+                'user_login.html', msg='Enter username and password'
             )
 
 
-@app.route('/admin-login', methods=['GET', 'POST'])
-def admin_login():
+@app.route('/deposit', methods=['POST'])
+def deposit():
+    if request.method == 'POST':
+        user = User(file)
+        user.initialize_user(session['username'])
+        amount = request.form.get('deposit')
+        amount = int(amount)
+        if amount > 0:
+            user.deposit(amount)
+            return redirect('/user-home')
+        else:
+            render_template('user_home.html', msg="Error")
+
+
+@app.route('/withdraw', methods=['POST'])
+def withdraw():
+    if request.method == 'POST':
+        user = User(file)
+        user.initialize_user(session['username'])
+        amount = request.form.get('withdraw')
+        amount = int(amount)
+        if amount > 0:
+            user.withdraw(amount)
+            return redirect('/user-home')
+        else:
+            render_template('user_home.html', msg="Error")
+
+
+@app.route('/user-home', methods=['GET', 'POST'])
+def user_home():
     if request.method == 'GET':
+        user = User(file)
+        user.initialize_user(session['username'])
+        prices = {}
+        stocks = {}
+        stocks = user.positions
+        for key in stocks:
+            prices[key] = [stocks[key], user.quote_last_price2(key)]
+
         return render_template(
-            'admin_login.html', msg='Enter admin username and password'
+            'user_home.html',
+            usr=user.username,
+            balance=user.balance,
+            positions=prices,
+            symbol="",
+            price=""
         )
-    elif request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        admin = Admin()
-        if admin.login(username, password):
-            session['admin'] = username
-            return redirect(url_for('admin_home'))
+
+
+@app.route('/trade-stock', methods=['GET'])
+def trade_stock():
+    if request.method == 'GET':
+        return render_template('trade_stock.html')
+
+
+@app.route('/buy-stocks', methods=['GET', 'POST'])
+def buy_stocks():
+    if request.method == 'POST':
+        ticker = request.form.get('ticker_symbol')
+        amount = int(request.form.get('num_of_stocks'))
+        user = User(file)
+        user.initialize_user(session['username'])
+        if user.buy_stocks(ticker, amount):
+            return render_template(
+                'trade_stock.html',
+                buy_msg='Stocks bought successfully'
+            )
         else:
             return render_template(
-                'admin_login.html',
-                msg='Invalid Credentials'
+                'trade_stock.html',
+                buy_msg='Transaction failed due to insufficient amount of balance'
             )
+
+
+@app.route('/sell-stocks', methods=['GET', 'POST'])
+def sell_stocks():
+    if request.method == 'POST':
+        ticker = request.form.get('ticker_symbol')
+        amount = int(request.form.get('num_of_stocks'))
+        user = User(file)
+        user.initialize_user(session['username'])
+        if user.sell_stocks(ticker, amount):
+            return render_template(
+                'trade_stock.html',
+                sell_msg='Stocks sold successfully'
+            )
+        else:
+            return render_template(
+                'trade_stock.html',
+                sell_msg='Transaction failed due to insufficient amount of stocks'
+            )
+
+
+@app.route('/quote-stock-price', methods=['POST'])
+def quote_stock_price():
+    if request.method == 'POST':
+        ticker = request.form.get('ticker_symbol')
+        if ticker:
+            stock_price = User(file).quote_last_price2(ticker)
+            return render_template('trade_stock.html', price=stock_price)
+
+
+@app.route('/search-ticker', methods=['POST'])
+def search_stock():
+    if request.method == 'POST':
+        company = request.form.get('company_name')
+        if company:
+            ticker = User(file).lookup_ticker_symbol(company)
+            return render_template('trade_stock.html', symbol=ticker)
+        else:
+            return render_template('trade_stock.html')
+
+# @app.route('/search-ticker', methods=['POST'])
+# def search_ticker():
+#     if request.methods == 'POST':
+#         user = User(file)
+#         user.initialize_user(session['username'])
+#         company_name = request.form.get(company_name)
+#         ticker = user.lookup_ticker_symbol(company_name)
+#         return redirect(url_for('user_home'))
 
 
 @app.route('/admin-home', methods=['GET', 'POST'])
@@ -109,6 +222,7 @@ def admin_home():
         admin.initialize_admin(session['admin'])
         return render_template(
             'admin_home.html',
+            leaderboard=admin.leaderboard  # admin.leaderboard
         )
 
 
@@ -118,4 +232,4 @@ def leaderboard():
 
 
 if __name__ == '__main__':
-    app.run(port=5001)
+    app.run(port=5003)

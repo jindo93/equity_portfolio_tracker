@@ -7,21 +7,58 @@ javascript behavior -->
 <html>
   <head>
     <meta charset="utf-8" />
+    <style>
+      table,
+      th,
+      td {
+        border: 1px solid black;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 5px;
+        text-align: left;
+      }
+    </style>
   </head>
   <body>
     <div>
       <!-- this is the form section -->
       <h1>{{ usr }}'s home</h1>
+      <p>Message: {{ msg }}</p>
       <p>Balance: {{ balance }}</p>
-      <p>Stocks:</p>
-      {% for key, value in positions.items() %}
-      <p>{{ key }} {{ value }}</p>
-      {% endfor %}
-      <p>Earnings: {{ earnings }}</p>
-      <form action="/update-balance" method="post">
-        <input name="deposit" type="text" placeholder="Amount" />
+
+      <form action="/deposit" method="post">
+        <input name="deposit" type="number" placeholder="Deposit Amount" />
         <input type="submit" />
       </form>
+      <form action="/withdraw" method="post">
+        <input name="withdraw" type="number" placeholder="Withdraw Amount" />
+        <input type="submit" />
+      </form>
+
+      <table style="width:100%">
+        <caption>
+          Stock Holdings
+        </caption>
+        <tr>
+          <th>Symbol</th>
+          <th>Holdings</th>
+          <th>Value</th>
+        </tr>
+        {% for key, value in positions.items() %}
+        <tr>
+          <td>{{ key }}</td>
+          <td>{{ value[0] }}</td>
+          <td>$ {{ value[0] * value[1] }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+
+      <br />
+      <a href="/trade-stock">
+        <p>Stock Transaction</p>
+      </a>
     </div>
   </body>
   <br />

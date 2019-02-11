@@ -10,8 +10,9 @@ class Admin:
     def __init__(self):
         self.username = ""
         self.password = ""
-        self.filename = 'datafile.db'
+        self.filename = 'run/datafile.db'
         self.admins = 'admins.json'
+        self.leaderboard = []
 
     def login(self, username, password):
         with open(self.admins, 'r') as file:
@@ -19,14 +20,19 @@ class Admin:
         admin_dic = data[username]
         if password != admin_dic['password']:
             return False
-        admin = Admin()
-        admin.username = username
-        admin.password = admin_dic['password']
         return True
 
     def initialize_admin(self, username):
-        admin = Admin()
-        admin.username = username
+        '''leaderboard is is initialized successfully.'''
+        #admin = Admin()
+        self.username = username
+        with open(self.admins, 'r') as file:
+            data = json.load(file)
+        admin_dic = data[username]
+        self.password = admin_dic['password']
+        self.filename = self.filename
+        self.admins = self.admins
+        self.leaderboard = self.get_leaderboard()
         return True
 
     def delete_user(self, table_name, user_name):
@@ -51,7 +57,7 @@ class Admin:
 
     @staticmethod
     def getKey(item):
-        return item[1]
+        return item[2]
 
     # def get_leaderboard(self):
     #     with Schema(self.filename) as db:
@@ -74,39 +80,40 @@ class Admin:
     def quote_last_price(self, ticker_symbol):
         with Markit() as m:
             ticker = ticker_symbol.lower()
-            last_price = m.quote(ticker)
+            last_price = m.quote_price2(ticker)
             if isinstance(last_price, bool):
                 return False
             return last_price
 
     def calculate_earnings(self, userid):
+        position_dict = {}
         with Schema(self.filename) as db:
             position_dict = db.query_positions(userid)
-        total_earnings = 0
-        for i, k in enumerate(position_dict):
-            stock_price = self.quote_last_price(k)
-            total_earnings += position_dict[k]*stock_price
-        return total_earnings
+            total_earnings = 0
+            for key in position_dict:
+                stock_price = self.quote_last_price(key)
+                total_earnings += position_dict[key]*stock_price
+            return total_earnings
 
     def get_leaderboard(self):
+        '''Returns a leaderboard with top 10 users'''
         with Schema(self.filename) as db:
-            sql = 'SELECT user_id FROM users;'
+            sql = '''SELECT user_id, username FROM users;'''
             db.cursor.execute(sql)
-            ids = db.cursor.fetchall()
-        earnings = []
-        for id in ids:
-            earning = self.calculate_earnings(id[0])
-            earnings.append((id[0], earning))
-        sorted(earnings, key=self.getKey, reverse=True)
-        leaderboard = earnings[:10]
-        return leaderboard
+            users = db.cursor.fetchall()
+            earnings = []
+            for user in users:
+                earning = self.calculate_earnings(user[0])
+                earnings.append((user[0], user[1], earning))
+            sorted_earnings = sorted(earnings, key=self.getKey, reverse=True)
+            leaderboard = sorted_earnings[:10]
+            return leaderboard
 
     def query_positions(self, userid):
         with Schema(self.filename) as db:
             return db.query_positions(userid)
 
     # function created for testing
-
     def create_terminal_trader_tables(self):
         with Schema(self.filename) as db:
             db.cursor.execute('''DROP TABLE IF EXISTS users;''')
@@ -140,7 +147,7 @@ class Admin:
             db.cursor.execute(sql_trades)
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # Admin('demo.db').create_terminal_trader_tables()
-    admin = Admin()
-    admin.login('yjd', '0000')
+    # admin = Admin()
+    # admin.login('yjd', '0000')

@@ -65,8 +65,8 @@ class Schema:
                         FROM users
                         WHERE username = "{0}";'''.format(username)
             self.cursor.execute(sql)
-            users = self.cursor.fetchall()
-            return users
+            user = self.cursor.fetchall()
+            return user
         except:
             return False
 

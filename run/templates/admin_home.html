@@ -2,8 +2,41 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <style>
+      table,
+      th,
+      td {
+        border: 1px solid black;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 5px;
+        text-align: left;
+      }
+    </style>
   </head>
   <div>
     <h1>Admin Home</h1>
+    <p>View Leaderboard</p>
+    <table style="width:100%">
+      <caption>
+        Stock Holdings
+      </caption>
+      <tr>
+        <th>User ID</th>
+        <th>User Name</th>
+        <th>Asset Value</th>
+      </tr>
+      {% for i in leaderboard %}
+      <tr>
+        <td>{{ i[0] }}</td>
+        <td>{{ i[1] }}</td>
+        <td>{{ i[2] }}</td>
+      </tr>
+      {% endfor %}
+    </table>
   </div>
+  <br />
+  <a href="/admin-logout">Logout</a>
 </html>
