@@ -77,7 +77,7 @@ def admin_logout():
 @app.route('/signup', methods=['GET', 'POST'])
 def create_account():
     if request.method == 'GET':
-        return render_template('signup.html', msg='Check if username exists')
+        return render_template('signup.html')
     elif request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -89,7 +89,8 @@ def create_account():
         else:
             user.signup(username, password)
             return render_template(
-                'user_login.html', msg='Enter username and password'
+                'user_login.html',
+                msg='Successfully signed up! Enter username and password to login'
             )
 
 
