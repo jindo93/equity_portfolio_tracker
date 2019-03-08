@@ -19,7 +19,8 @@ def frontpage():
     elif 'admin' in session:
         return redirect('/admin-home')
     else:
-        return render_template('index.html')  # redirect('/login')
+        return render_template('dashboard.html')
+        # return render_template('index.html')  # redirect('/login')
 
 
 @app.route('/user-login', methods=['GET', 'POST'])
