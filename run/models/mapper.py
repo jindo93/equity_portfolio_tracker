@@ -160,6 +160,7 @@ class Schema:
             trades = self.cursor.fetchall()
             trades_dict = {}
             for trade in trades:
+                print("sell price: ", trade[3])
                 if not trades_dict.get(trade[2]):
                     trades_dict[trade[2]] = trade[3]*trade[4]
                 else:
@@ -178,6 +179,7 @@ class Schema:
             trades = self.cursor.fetchall()
             trades_dict = {}
             for trade in trades:
+                print("buy price: ", trade[3])
                 if not trades_dict.get(trade[2]):
                     trades_dict[trade[2]] = trade[3]*trade[4]
                 else:

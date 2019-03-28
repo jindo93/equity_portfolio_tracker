@@ -2,7 +2,6 @@
 import json
 from models.mapper import Schema
 from models.wrapper import Markit
-from models.user import User
 
 
 class Admin:

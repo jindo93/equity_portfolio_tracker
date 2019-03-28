@@ -15,7 +15,9 @@ class User:
         self.balance = 0.00
         self.positions = {}
         self.earnings = {}
+        self.net = {}
 
+    # TODO check usage
     def login(self, username, password):
         if self.confirm_user(username, password):
             with Schema(self.file_name) as db:
@@ -37,6 +39,8 @@ class User:
                 self.password = user[0][2]
                 self.balance = user[0][3]
                 self.positions = db.query_positions(self.user_id)
+                self.net = self.get_each_earnings()
+                print("net profit/loss: ", self.net)
             return True
         return False
 
@@ -158,22 +162,37 @@ class User:
 
     def get_each_earnings(self):
         position_value = {}
-        for i, k in enumerate(self.positions):
-            position_value[k] = self.positions[k]*self.quote_last_price(k)
+        # for k in self.positions:
+        #     position_value[k] = self.positions[k] * \
+        #         self.quote_last_price(k)
         buy_trade = self.get_buy_trades()
         sell_trade = self.get_sell_trades()
-        for i, k in enumerate(position_value):
-            if sell_trade.get(k):
-                position_value[k] += sell_trade[k]
-            if buy_trade.get(k):
-                position_value[k] -= buy_trade[k]
+        for k in self.positions:
+            if position_value.get(k) == None:
+                if sell_trade.get(k):
+                    position_value[k] = sell_trade[k]
+                if buy_trade.get(k):
+                    position_value[k] = -buy_trade[k]
+            else:
+                if sell_trade.get(k):
+                    position_value[k] += sell_trade[k]
+                if buy_trade.get(k):
+                    position_value[k] -= buy_trade[k]
+
+            # k = k.lower()
+            # print("yoyo: ", sell_trade.get(k))
+            # if sell_trade.get(k):
+            #     print("oink oink: ", sell_trade.get(k))
+            #     position_value[k] += sell_trade.get(k)
+            # if buy_trade.get(k) != None:
+            #     position_value[k] -= buy_trade.get(k)
 
         return position_value
 
     def get_total_earnings(self):
         earnings = self.get_each_earnings()
         total = 0
-        for i, k in enumerate(earnings):
+        for k in earnings:
             total += earnings[k]
         return total
 
@@ -181,12 +200,14 @@ class User:
         trade_dict = {}
         with Schema(self.file_name) as db:
             trade_dict = db.get_sell_trades(self.user_id)
+        print("sell trades: ", trade_dict)
         return trade_dict
 
     def get_buy_trades(self):
         trade_dict = {}
         with Schema(self.file_name) as db:
             trade_dict = db.get_buy_trades(self.user_id)
+        print("buy trades: ", trade_dict)
         return trade_dict
 
     def record_trade(self, ticker, type, stock_price, num_of_shares, timestamp):
@@ -236,6 +257,7 @@ class User:
 
 
 ###########################################################
+
 
     def change_password(self, new_password):
         with Schema(self.file_name) as db:
