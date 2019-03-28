@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, session, redirect, url_for
 app = Flask(__name__)
 # Creating an instance of the Flask class and assigning it to the app variable.
 app.secret_key = 'random'
-file = 'run/datafile.db'
+file = 'run/datafiles/database.db'
 
 
 @app.route('/', methods=['GET'])
@@ -78,12 +78,17 @@ def create_account():
     if request.method == 'GET':
         return render_template('signup.html')
     elif request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
         user = User(file)
-        if user.query_username(username):
+        if user.check_username(username):
             return render_template(
                 'signup.html', msg='Username already exists!'
+            )
+        if user.check_email(email):
+            return render_template(
+                'signup.html', msg='You have already signed up!'
             )
         else:
             user.signup(username, password)
@@ -126,22 +131,13 @@ def user_home():
     if request.method == 'GET':
         user = User(file)
         user.initialize_user(session['username'])
-        prices = {}
-        stocks = {}
-        stocks = user.positions
-        #net = user.net
-        i = 1
-        for key in stocks:
-            prices[key] = [stocks[key], user.quote_last_price2(key), i]
-            i = i+1
+        dashboard = user.get_dashboard()
 
         return render_template(
             'dashboard.html',
             usr=user.username,
             balance=user.balance,
-            positions=prices,
-            symbol="",
-            price=""
+            positions=dashboard
         )
 
 

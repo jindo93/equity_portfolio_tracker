@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-from models.mapper import Schema
-from models.wrapper import Markit
 import time
+
+from mapper import Schema
+from wrapper import Markit
 
 
 class User:
@@ -15,7 +16,7 @@ class User:
         self.balance = 0.00
         self.positions = {}
         self.earnings = {}
-        self.net = {}
+        self.net_profit = {}
 
     # TODO check usage
     def login(self, username, password):
@@ -39,14 +40,28 @@ class User:
                 self.password = user[0][2]
                 self.balance = user[0][3]
                 self.positions = db.query_positions(self.user_id)
-                self.net = self.get_each_earnings()
-                print("net profit/loss: ", self.net)
+                self.net_profit = self.get_each_earnings()
             return True
         return False
+
+    # holdings value net gain/loss
+    def get_dashboard(self):
+        dashboard = {}
+        positions = self.positions
+        net_profit = self.net_profit
+        for i, k in enumerate(positions):
+            key = k.upper()
+            value = positions[k]*self.quote_last_price2(k)
+            dashboard[key] = [positions[k], value, i+1, value+net_profit[k]]
+
+        return dashboard
 
     def signup(self, username, password):
         with Schema(self.file_name) as db:
             return db.signup(username, password)
+
+    def register_group(self):
+        pass
 
     def withdraw(self, amount):
         if self.balance >= amount:
@@ -162,12 +177,10 @@ class User:
 
     def get_each_earnings(self):
         position_value = {}
-        # for k in self.positions:
-        #     position_value[k] = self.positions[k] * \
-        #         self.quote_last_price(k)
         buy_trade = self.get_buy_trades()
         sell_trade = self.get_sell_trades()
         for k in self.positions:
+            print('key: ', k)
             if position_value.get(k) == None:
                 if sell_trade.get(k):
                     position_value[k] = sell_trade[k]
@@ -178,19 +191,10 @@ class User:
                     position_value[k] += sell_trade[k]
                 if buy_trade.get(k):
                     position_value[k] -= buy_trade[k]
-
-            # k = k.lower()
-            # print("yoyo: ", sell_trade.get(k))
-            # if sell_trade.get(k):
-            #     print("oink oink: ", sell_trade.get(k))
-            #     position_value[k] += sell_trade.get(k)
-            # if buy_trade.get(k) != None:
-            #     position_value[k] -= buy_trade.get(k)
-
         return position_value
 
     def get_total_earnings(self):
-        earnings = self.get_each_earnings()
+        earnings = self.net_profit
         total = 0
         for k in earnings:
             total += earnings[k]
@@ -200,14 +204,12 @@ class User:
         trade_dict = {}
         with Schema(self.file_name) as db:
             trade_dict = db.get_sell_trades(self.user_id)
-        print("sell trades: ", trade_dict)
         return trade_dict
 
     def get_buy_trades(self):
         trade_dict = {}
         with Schema(self.file_name) as db:
             trade_dict = db.get_buy_trades(self.user_id)
-        print("buy trades: ", trade_dict)
         return trade_dict
 
     def record_trade(self, ticker, type, stock_price, num_of_shares, timestamp):

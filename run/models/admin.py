@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
+
 import json
-from models.mapper import Schema
-from models.wrapper import Markit
+import time
+
+from mapper import Schema
+from wrapper import Markit
 
 
 class Admin:
@@ -9,7 +12,7 @@ class Admin:
     def __init__(self):
         self.username = ""
         self.password = ""
-        self.filename = 'run/datafile.db'
+        self.filename = 'datafiles/database.db'
         self.admins = 'admins.json'
         self.leaderboard = []
 
@@ -22,8 +25,6 @@ class Admin:
         return True
 
     def initialize_admin(self, username):
-        '''leaderboard is is initialized successfully.'''
-        #admin = Admin()
         self.username = username
         with open(self.admins, 'r') as file:
             data = json.load(file)
@@ -57,24 +58,6 @@ class Admin:
     @staticmethod
     def getKey(item):
         return item[2]
-
-    # def get_leaderboard(self):
-    #     with Schema(self.filename) as db:
-    #         sql = '''SELECT username FROM users;'''
-    #         db.cursor.execute(sql)
-    #         usernames = db.cursor.fetchall()
-    #     names = []
-    #     for username in usernames:
-    #         names.append(username[0])
-
-    #     earnings = []
-    #     for name in names:
-    #         earning = self.get_total_earnings(name)
-    #         earnings.append((name, earning))
-    #     sorted(earnings, key=self.getKey, reverse=True)
-    #     leaderboard = earnings[:10]
-
-    #     return leaderboard
 
     def quote_last_price(self, ticker_symbol):
         with Markit() as m:
@@ -113,16 +96,20 @@ class Admin:
             return db.query_positions(userid)
 
     # function created for testing
-    def create_terminal_trader_tables(self):
+    def create_stockfolio_tables(self):
         with Schema(self.filename) as db:
             db.cursor.execute('''DROP TABLE IF EXISTS users;''')
             db.cursor.execute('''DROP TABLE IF EXISTS positions;''')
             db.cursor.execute('''DROP TABLE IF EXISTS trades;''')
+            db.cursor.execute('''DROP TABLE IF EXISTS groups;''')
             sql_users = '''CREATE TABLE users(
                                 user_id         INTEGER PRIMARY KEY AUTOINCREMENT,
                                 username        VARCHAR,
                                 password        VARCHAR,
-                                balance         FLOAT
+                                balance         FLOAT,
+                                email           VARCHAR,
+                                group_id        INTEGER,
+                                    FOREIGN KEY(group_id) REFERENCES groups(group_id)
                             );'''
             db.cursor.execute(sql_users)
             sql_positions = '''CREATE TABLE positions(
@@ -144,9 +131,13 @@ class Admin:
                                     FOREIGN KEY(user_id) REFERENCES users(user_id)
                         );'''
             db.cursor.execute(sql_trades)
+            sql_groups = '''CREATE TABLE groups(
+                                group_id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                                group_name      VARCHAR,
+                                group_count     INTEGER
+                        );'''
+            db.cursor.execute(sql_groups)
 
 
-# if __name__ == '__main__':
-    # Admin('demo.db').create_terminal_trader_tables()
-    # admin = Admin()
-    # admin.login('yjd', '0000')
+if __name__ == '__main__':
+    Admin().create_stockfolio_tables()

@@ -70,15 +70,12 @@ class Schema:
         except:
             return False
 
-    def signup(self, username, password):
-        if self.query_username(username):
-            return False
-        else:
-            self.cursor.execute('''INSERT INTO users(
-                                username, password, balance
-                                ) VALUES (?,?,?);''',
-                                (username, password, 0))
-            return True
+    def signup(self, username, password, email):
+        self.cursor.execute('''INSERT INTO users(
+                            username, password, balance, email
+                            ) VALUES (?,?,?,?);''',
+                            (username, password, 0, email))
+        return True
 
     def query_table(self, table_name):
         try:
@@ -110,17 +107,26 @@ class Schema:
         except:
             return False
 
-    def query_username(self, user_name):
-        try:
-            sql = ''' SELECT *
-                        FROM users
-                        WHERE username = "{0}";'''.format(user_name)
-            self.cursor.execute(sql)
-            user = self.cursor.fetchall()
-            if len(user) == 1:
-                return True
-        except:
-            return False
+    def check_username(self, user_name):
+        sql = ''' SELECT *
+                    FROM users
+                    WHERE username = "{0}";'''.format(user_name)
+        self.cursor.execute(sql)
+        user = self.cursor.fetchall()
+        if len(user) == 1:
+            return True
+        return False
+
+    def check_email(self, email):
+        self.cursor.execute(
+            '''SELECT *
+                FROM users
+                WHERE email = "{0}";'''.format(email)
+        )
+        user = self.cursor.fetchall()
+        if len(user) == 1:
+            return True
+        return False
 
     def query_position(self, username, ticker):
         try:
@@ -145,7 +151,7 @@ class Schema:
             positions = self.cursor.fetchall()
             position_dict = {}
             for position in positions:
-                position_dict[position[1].upper()] = position[2]
+                position_dict[position[1]] = position[2]
             return position_dict
         except:
             return False
@@ -160,7 +166,6 @@ class Schema:
             trades = self.cursor.fetchall()
             trades_dict = {}
             for trade in trades:
-                print("sell price: ", trade[3])
                 if not trades_dict.get(trade[2]):
                     trades_dict[trade[2]] = trade[3]*trade[4]
                 else:
@@ -179,7 +184,6 @@ class Schema:
             trades = self.cursor.fetchall()
             trades_dict = {}
             for trade in trades:
-                print("buy price: ", trade[3])
                 if not trades_dict.get(trade[2]):
                     trades_dict[trade[2]] = trade[3]*trade[4]
                 else:
