@@ -2,6 +2,7 @@
 
 import os
 import sqlite3
+from datetime import datetime
 
 
 class Schema:
@@ -127,6 +128,26 @@ class Schema:
         if len(user) == 1:
             return True
         return False
+
+    def get_trades(self, user_id):
+        try:
+            self.cursor.execute(
+                '''SELECT *
+                FROM trades
+                WHERE user_id = {0};'''.format(user_id)
+            )
+            trades = self.cursor.fetchall()
+            trades_dict = {}
+            i = 1
+            for trade in trades:
+                time = datetime.fromtimestamp(
+                    trade[5]).strftime('%Y-%m-%d %H:%M:%S')
+                trades_dict[i] = [time,
+                                  trade[2], trade[4], trade[3], trade[1]]
+                i += 1
+            return trades_dict
+        except:
+            return False
 
     def query_position(self, username, ticker):
         try:

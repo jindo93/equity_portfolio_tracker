@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, session, redirect, url_for
 app = Flask(__name__)
 # Creating an instance of the Flask class and assigning it to the app variable.
 app.secret_key = 'random'
-file = 'run/datafiles/database.db'
+file = 'run/datafile.db'
 
 
 @app.route('/', methods=['GET'])
@@ -26,7 +26,7 @@ def frontpage():
 def user_login():
     if request.method == 'GET':
         return render_template(
-            'user_login.html', msg='Please Sign-in'
+            'user_login.html', msg='Sign-in'
         )
     elif request.method == 'POST':
         username = request.form['username']
@@ -143,7 +143,15 @@ def user_home():
 
 @app.route('/order-history', methods=['GET'])
 def order_history():
-    return render_template('order_history.html')
+    if request.method == 'GET':
+        user = User(file)
+        user.initialize_user(session['username'])
+        trades = user.get_trades()
+
+    return render_template(
+        'order_history.html',
+        trades=trades
+    )
 
 
 @app.route('/trade-stock', methods=['GET'])

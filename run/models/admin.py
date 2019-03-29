@@ -3,8 +3,8 @@
 import json
 import time
 
-from mapper import Schema
-from wrapper import Markit
+from models.mapper import Schema
+from models.wrapper import Markit
 
 
 class Admin:

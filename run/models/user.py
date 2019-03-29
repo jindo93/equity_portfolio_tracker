@@ -2,8 +2,8 @@
 
 import time
 
-from mapper import Schema
-from wrapper import Markit
+from models.mapper import Schema
+from models.wrapper import Markit
 
 
 class User:
@@ -32,7 +32,7 @@ class User:
         return False
 
     def initialize_user(self, username):
-        if self.query_username(username):
+        if self.check_username(username):
             with Schema(self.file_name) as db:
                 user = db.initialize_user(username)
                 self.user_id = user[0][0]
@@ -144,13 +144,17 @@ class User:
                 return False
             return last_price
 
-    def query_username(self, username):
+    def check_username(self, username):
         with Schema(self.file_name) as db:
-            return db.query_username(username)
+            return db.check_username(username)
 
-    def query_positions(self, username):
+    def get_trades(self):
         with Schema(self.file_name) as db:
-            return db.query_positions(username)
+            return db.get_trades(self.user_id)
+
+    def query_positions(self, user_id):
+        with Schema(self.file_name) as db:
+            return db.query_positions(user_id)
 
     # TODO TEST username_search
     def username_search(self, username):
@@ -180,7 +184,6 @@ class User:
         buy_trade = self.get_buy_trades()
         sell_trade = self.get_sell_trades()
         for k in self.positions:
-            print('key: ', k)
             if position_value.get(k) == None:
                 if sell_trade.get(k):
                     position_value[k] = sell_trade[k]
@@ -259,7 +262,6 @@ class User:
 
 
 ###########################################################
-
 
     def change_password(self, new_password):
         with Schema(self.file_name) as db:
